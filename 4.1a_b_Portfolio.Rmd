@@ -364,7 +364,9 @@ dim(trees.ab)
 library(labdsv) #LABDSV converts this list of sample IDs, species and site-specific abundances into a matrix in which species names are column headings, and row names are samples. To do this, it creates a master list of all species in all samples
 abundance<-matrify(trees.ab)
 abundance
-dim(abundance) 
+dim(abundance)
+abundance <- as.matrix(abundance)
+class(abundance)
 ```
 Now that I have my matrix, I can now get diversity indices! 
 
@@ -374,8 +376,10 @@ library(vegan)
 abundance
 shannon<-diversity(abundance, index = "shannon")
 shannon
+simpson<-diversity(abundance, index="simpson")
+simpson
 ```
-The Shannon idex is the same for all 6 samples, which makes sense because each sample has 10 unique tree species. The Shannon index gives us information regarding abundance of each species and species richness. Given that all samples have the same richness and abundance, it makes sense that the Shannon index is the same for all 6 samples. 
+The Shannon idex is the same for all 6 samples, which makes sense because each sample has 10 unique tree species. The Shannon index gives us information regarding abundance of each species and species richness. Given that all samples have the same richness and abundance, it makes sense that the Shannon index is the same for all 6 samples. The same applies for the Simpson data. 
 
 The compiled matrix has a master list of all plant species across all six lists. Resolve this master list for proper taxonomy -- each plant species should have an accepted scientific species name. (Using taxize if possible.). 
 I resolved the names using Global Names Resolver because I wasn't sure how to resolve using taxize (I've uploaded the csv to github)
@@ -384,9 +388,9 @@ Phylogenize (revisiting skills from Digital Lab 3). Again, it's a good idea to w
 
 
 ```{r}
-install.packages(ape)
-install.packages(devtools)
-devtools::install_github("ropensci/brranching")
+#install.packages(ape)
+#install.packages(devtools)
+#devtools::install_github("ropensci/brranching")
 library(ape)
 library(brranching)
 ```
@@ -465,20 +469,27 @@ write.tree(tree_phylomatic_providence, file=newick_providence)
 
 ```
 
-I'm not sure how to use PD (Phylogenetic Diversity).  
+I'm not sure how to use PD (Phylogenetic Diversity)?
 ```{r}
-newick_toronto = "(((((acer_negundo,acer_saccharinum,acer_platanoides)acer,ulmus_americana),(fraxinus_pennsylvanica,fraxinus_americana)fraxinus),magnolia_grandiflora)magnoliales_to_asterales,(thuja_occidentalis,(pinus_nigra,picea_glauca)pinaceae)pinales);"
+newick_toronto = "(((((acer_negundo:1,acer_saccharinum:1,acer_platanoides:1):1acer:1,ulmus_americana:1):1,(fraxinus_pennsylvanica:1,fraxinus_americana:1):1fraxinus:1):1,magnolia_grandiflora:1):1magnoliales_to_asterales:1,(thuja_occidentalis:1,(pinus_nigra:1,picea_glauca:1):1pinaceae:1):1pinales:1):1;"
 tr_torontoFULL = read.tree(text=newick_toronto)
 plot(tr_torontoFULL, type="cladogram", direction=c("upwards"))
+abundance 
+phy <- abundance #CALL phylocom part phylo
+comm <- sample
+traits <- abundance
+phy
+comm
+pd.result <- pd(abundance, tr_torontoFULL, include.root=TRUE)
+pd.result
 
-par(mfrow = c(2, 2))
+par(mfrow = c(3, 2))
 
-for (i in row.names(tt.ab)) {
-plot(tr_torontoFULL, show.tip.label = FALSE, main = i)
-tiplabels(tip = which(tr_torontoFULL$tip.label %in% names(which(abundance [i, ] > 0))), pch=19, cex=1)
+for (i in row.names(abundance)) {
+plot(abundance, show.tip.label = FALSE, main = i)
+tiplabels(tip = which(abundanceo$tip.label %in% names(which(abundance [i, ] > 0))), pch=19, cex=1)
 }
 ```
-
 
 
 
