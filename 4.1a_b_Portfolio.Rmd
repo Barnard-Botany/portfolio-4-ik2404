@@ -1,0 +1,491 @@
+---
+title: 4.1a and b Portfolio
+output: html_notebook
+---
+Iasha Khan 
+
+#### Mini-Exercise #1 
+
+Below is a map of Spain and Portugal and the different temperature ranges in the 2 countries.
+```{r}
+peninsula.worldclim <- crop(all.worldclim, extent(-10, 4, 35, 45))
+plot(peninsula.worldclim[["bio1"]])
+```
+
+Below is a map of Spain and Portugal based on altitude changes in different areas.
+```{r}
+plot(all.worldalt[["alt"]], xlim=c(-10,4),ylim=c(35,45))
+```
+Answer the questions about this peninsula example. Then do your own example from Latin America:
+1. Where in the world is the peninsula mapped? 
+The Iberian Peninsula and it specifically shows Spain and Portugal. 
+2. Is altitude a climate variable? How do the peninsula maps plotted above support your answer?
+Altitude is a climate variable because as altitude increases, temperature decreases. This is supported by tthe maps plotted above because higher altitude areas are the areas with the lowest temperatures.
+3. Make a South America map with occurrence data for Jungia pauciflora & J. polita and:
+          a. Crop the map to allow discerning more detail in the two ranges
+          b. Also include altitude data or climate data, with occurrence points overlayed.
+          
+Loading all the necessary packages first:
+```{r}
+library(BIEN)
+library(ape) 
+library(maps) 
+library(sp)
+library(raster)
+library(DBI)
+library (RPostgreSQL)
+vignette("BIEN")
+```
+
+Getting occurence data for J. polita and J. pauciflora
+```{r}
+J_polita <- BIEN_occurrence_species(species = "Jungia polita")
+J_pauciflora <- BIEN_occurrence_species(species = "Jungia pauciflora")
+J_pauciflora
+J_polita
+```
+
+Because I know J. polita and J. pauciflora are found in South America, I will trim my data such that the data will match the South American region. I will superimpose J. polita and J. pauciflora data on a map that details altitude information.
+
+```{r}
+all.worldalt <- raster::getData("worldclim", res = 10, var = "alt")
+SAmerica.worldalt <- crop(all.worldalt, extent(-75, -50, -30, -15))
+plot(SAmerica.worldalt[["alt"]])
+points(cbind(J_pauciflora$longitude, J_pauciflora$latitude), col="red", pch=20, cex=.8)
+points(cbind(J_polita$longitude, J_polita$latitude), col="white", pch=20, cex=.8)
+```
+
+
+#### Mini-Exercise #2
+I chose to work with Zea mays and Vanilla planifolia. 
+
+WORK WITH TAXISE
+1. Look up - are they accepted names or are they synonyms?
+
+```{r}
+library("rgbif")
+library("spocc")
+library("taxize")
+
+name="Zea mays"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn
+lapply(tsn, itis_acceptname)
+
+name="Vanilla planifolia"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn
+lapply(tsn, itis_acceptname)
+
+```
+Data base is not telling me the accepted names. However, I was able to verify that Zea mays is the accepted name for corn and Vanilla planifolia is the accepted name for the vanilla orchid using ncbi website.
+
+2. Look up the two plant taxa. Are they both angiosperms? Yes, they are both angiosperms because they are in the class Magnoliospida, which is a botanical name for a class of flowering plants. Also, they are both classified in the Lilianae superorder, which is a superorder of flowering plants.
+```{r}
+classification(c("Zea mays", "Vanilla planifolia"), db="itis")
+```
+
+
+3. Angiosperm or otherwise, what plant family do they belong to?
+Zea mays belongs to Poaceae and Vanilla planifolia belongs to Orchidaceae.
+4. For at least one genus, look up all the species in that genus.
+I looked up all the species in the Zea genus. I get a total of 121 species.
+
+```{r}
+children("Zea", db="col")
+```
+5. For one species, look up to see if there are subspecies or other infraspecific forms.
+Infraspecies for Vanilla is Vanilla lutescens, Vanilla pittieri, 	Vanilla pompona grandiflora, Vanilla pompona pittieri, and Vanilla pompona pompona
+, 
+```{r}
+children("Vanilla", db="col")
+```
+
+
+WORK WITH RGBIF OR SPOCC
+6. For both, search and download species occurrence data; prepare as a data-frame
+7. Clean-up the data-frame:  remove occurrences with missing data and duplicates
+
+Searching and downloading species occurrence data for Z. mays and cleaning up the data frame
+```{r}
+Z_mays <- occ(q="Zea mays", from="gbif", limit=500)   #With this line of code, I am getting occurrence data
+Z_mays_data <- (Z_mays$gbif$data)
+Z_mays_df <- occ2df(Z_mays)                  #With this line of code, I am converting into dataframe
+Z_mays_df <- Z_mays_df[complete.cases(Z_mays_df),]     #With this line of code, I am cleaning the dataframe
+Z_mays_df
+```
+
+
+Searching and downloading species occurrence data for V. planifolia and cleaning up the data frame
+
+```{r}
+V_planifolia <- occ(q="Vanilla planifolia", from="gbif", limit=500)   #Getting occurrence data
+V_planifolia_data <- (V_planifolia$gbif$data)
+V_planifolia_df <- occ2df(V_planifolia)                  #Converting into dataframe
+V_planifolia_df <- V_planifolia_df[complete.cases(V_planifolia_df),]     #Cleaning dataframe
+V_planifolia_df
+```
+WORK WITH OCCURRENCE DATA, WORLDCLIM DATA AND MAPS
+8. Map occurrence data with a climate variable for one species on the peninsula
+I will map the occurrence data for V. planifolia in the peninsula. There is just 1 occurrence data point (that appears to be in Germany) and there is no occurrence in the Iberian peninsula.
+
+```{r}
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+peninsula.worldclim <- crop(all.worldclim, extent(-20, 50, 20, 60))
+plot(peninsula.worldclim[["bio1"]])
+points(cbind(V_planifolia_df$longitude, V_planifolia_df$latitude), col="blue", pch=20, cex=.8)
+```
+9. Also map that species with climate variables on a world map or European map. Are you convinced that the species is endemic to this peninsula?
+
+```{r}
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+# peninsula.worldclim <- crop(all.worldclim, extent(-20, 50, 20, 60))
+plot(all.worldclim[["bio1"]])
+points(cbind(V_planifolia_df$longitude,V_planifolia_df$latitude), col="red", pch=20, cex=.8)
+```
+Vanilla planifolia is not endemic to the Iberian peninsula given its occurrence data. I would infer from the map that V. planifolia is endemic to Mexico (given the high occurrence data there)
+
+10. Returning to your results for #4 above, find another species with a range outside of the  peninsula. Download occurrence data and map on a world map. 
+11. Then re-map on an appropriately cropped map.
+Downloading occurrence data for Vanilla cribbiana.
+```{r}
+vc <- occ(q="Vanilla cribbiana", from="gbif", limit=500)
+vc_data <- (vc$gbif$data)
+vc_df <- occ2df(vc) 
+vc_df <- vc_df[complete.cases(vc_df),] 
+vc_df
+```
+
+Mapping Vanilla cribbiana.
+```{r}
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+# peninsula.worldclim <- crop(all.worldclim, extent(-20, 50, 20, 60))
+plot(all.worldclim[["bio1"]])
+points(cbind(vc_df$longitude, vc_df$latitude), col="red", pch=20, cex=.8)
+```
+Re-mapping V. cribbiana in order to "zoom" into map.
+```{r}
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+peninsula.worldclim <- crop(all.worldclim, extent(-100, -30, -10, 25))
+plot(peninsula.worldclim[["bio1"]])
+points(cbind(vc_df$longitude, vc_df$latitude), col="red", pch=20, cex=.8)
+```
+V. planifolia is found near the Yucatán Peninsula. 
+
+ONE LAST THING
+12. Don't forget to identify the peninsula that we are working with!
+
+## Mini-exercise 3
+
+After using all the code above and perusing results, review what you've done with the PICANTE package by going back and making comparisons with the VEGAN package, which doesn't ever consider phylogeny. Simply work with the fake communities created: one, three, two and five.
+
+```{r}
+abundance <- read.csv("matrify_EXAMPLE.csv", row.names = 1)
+abundance <- as.matrix(abundance)
+abundance
+```
+Then, leave fake communities behind! You will need to write proper code and show results (with annotations) of your work in this notebook or create a new notebook: 
+
+Different municipal areas maintain street trees as part of the urban environment. Many publish lists of the most frequent street trees; suggestions below. For six different municipalities, get a list of trees. Have the same number of trees on each list (e.g., ten species each).  (Resources below to give a head-start with this)
+
+Compile your six lists into an abundance matrix. If it's too hard to get abundances, compile presence/absence matrix. Be sure to write the file and push it back to the GitHub repository when you complete this assignment (revisit Digital Lab 2 skills). 
+
+
+Loading the necessary packages first.
+```{r}
+library(picante)
+library(vegan)
+install.packages(ape)
+install.packages("devtools")
+devtools::install_github("ropensci/brranching")
+library("ape")
+library("brranching")
+```
+
+I read my Compiled Trees csv file, which contained all 60 species. # I wasn't sure how to use the file, so I just created variables for each city (see below).
+```{r}
+trees <- read.csv("Compiled_Trees.csv")
+trees <- as.matrix(trees)
+trees
+```
+
+I am creating a character variable for each city which will have the species entries.
+```{r}
+toronto_trees=c("Pinus nigra", "Ulmus americana", "Fraxinus pennsylvanica", "Acer saccharinum", "Acer platanoides","Fraxinus americana","Picea glauca", "Acer negundo", "Thuja occidentalis", "Magnolia grandiflora")
+
+sanfran_trees=c("Pittosporum undulatum", "Magnolia grandiflora", "Lophostemon confertus", "Prunus serrulata", "Arbutus Marina", "Metrosideros excelsa", "Ficus nitida", "Tristaniopsis laurina", "Platanus x hispanica", "Picea glauca")
+
+nyc_trees=c("Quercus palustris", "Gleditsia triacanthos", "Pyrus calleryana", "Acer platanoides", "Sophora japonica", "Zelkova serrata", "Tilia cordata", "Platanus × acerifolia", "Prunus avium", "Ginkgo biloba")
+
+chicago_trees=c("Ulmus Patriot", "Liquidambar styraciflua", "Platanus x acerifolia", "Zelkova serrata", "Tilia americana", "Sassafras albidum", "Ginkgo biloba", "Quercus imbricaria", "Ostrya virginiana", "Viburnum lentago")
+
+pittsburgh_trees= c("Acer platanoides", "Acer rubrum", "Pyrus calleryana", "Platanus x acerifolia", "Tilia cordata", "Liquidambar styraciflua", "Gleditsia triacanthos inermis", "Ginkgo biloba", "Zelkova serrata", "Quercus palustris")
+
+providence_trees=c("Acer platanoides", "Pyrus calleryana", "Fraxinus pennsylvanica", "Gleditsia triacanthos", "Platanus × acerifolia", "Acer rubrum", "Prunus serrulata", "Tilia cordata", "Zelkova serrata", "Acer saccharum")
+
+toronto_trees 
+sanfran_trees
+nyc_trees
+chicago_trees
+pittsburgh_trees
+providence_trees
+
+length(toronto_trees)
+length(sanfran_trees)
+length(nyc_trees)
+length(chicago_trees)
+length(pittsburgh_trees)
+length(providence_trees)
+```
+I now want to figure out how many indiduals there are of each species using the function "count" in the packed called PLYR (which I must load first). Once that's done, I've created a new variable which has the count of species. 
+
+```{r}
+library(plyr)
+toronto_trees
+tt.ab=count(toronto_trees)
+tt.ab
+class(tt.ab)
+length(tt.ab)
+tt.u=unique(tt.ab)
+tt.u
+length(tt.u)
+attributes(tt.ab)
+```
+Before I can combine any of my data sets, I need to add  avariable which will allow me to keep track of which sample is which
+```{r}
+tt.ab=data.frame("toronto_trees", tt.ab)
+tt.ab
+#This added a first column with every row populated by the string variable "one"
+#Let's also re-name columns. Later, my analyses of species richenss will need specifically named variables. 
+names(tt.ab)<-c("ListID", "SpeciesID", "Freq")
+tt.ab
+```
+
+I will now repeat what I did above for the other 5 lists 
+
+```{r}
+#Sanfran_Trees
+sanfran_trees
+st.ab=count(sanfran_trees)
+st.ab
+class(st.ab)
+length(st.ab)
+st.u=unique(st.ab)
+st.u
+length(st.u)
+attributes(st.ab)
+
+st.ab=data.frame("sanfran_trees", st.ab)
+st.ab
+names(st.ab)<-c("ListID", "SpeciesID", "Freq")
+st.ab
+
+
+```
+
+```{r}
+#nyc_trees 
+nyc_trees
+nt.ab=count(nyc_trees)
+nt.ab
+class(nt.ab)
+length(nt.ab)
+nt.u=unique(nt.ab)
+nt.u
+length(nt.u)
+attributes(nt.ab)
+
+nt.ab=data.frame("nyc_trees", nt.ab)
+nt.ab
+names(nt.ab)<-c("ListID", "SpeciesID", "Freq")
+nt.ab
+```
+
+```{r}
+#chicago_trees 
+chicago_trees
+ct.ab=count(chicago_trees)
+ct.ab
+class(ct.ab)
+length(ct.ab)
+ct.u=unique(ct.ab)
+ct.u
+length(ct.u)
+attributes(ct.ab)
+
+ct.ab=data.frame("chicago_trees", ct.ab)
+ct.ab
+names(ct.ab)<-c("ListID", "SpeciesID", "Freq")
+ct.ab
+```
+
+```{r}
+#pittsburgh_trees 
+pittsburgh_trees
+pt.ab=count(pittsburgh_trees)
+pt.ab
+class(pt.ab)
+length(pt.ab)
+pt.u=unique(pt.ab)
+pt.u
+length(pt.u)
+attributes(pt.ab)
+
+pt.ab=data.frame("pittsburgh_trees", pt.ab)
+pt.ab
+names(pt.ab)<-c("ListID", "SpeciesID", "Freq")
+pt.ab
+```
+
+
+```{r}
+#providence_trees
+providence_trees
+prt.ab=count(providence_trees)
+prt.ab
+class(prt.ab)
+length(prt.ab)
+prt.u=unique(prt.ab)
+prt.u
+length(prt.u)
+attributes(prt.ab)
+
+prt.ab=data.frame("providence_trees", prt.ab)
+prt.ab
+names(prt.ab)<-c("ListID", "SpeciesID", "Freq")
+prt.ab
+```
+Now that we have data on all 5 lists, we can combine them and compare them into a matrix!
+
+```{r}
+trees.ab=rbind(tt.ab, st.ab, ct.ab, nt.ab, pt.ab, prt.ab)
+trees.ab
+dim(trees.ab)
+library(labdsv) #LABDSV converts this list of sample IDs, species and site-specific abundances into a matrix in which species names are column headings, and row names are samples. To do this, it creates a master list of all species in all samples
+abundance<-matrify(trees.ab)
+abundance
+dim(abundance) 
+```
+Now that I have my matrix, I can now get diversity indices! 
+
+Getting Shannon Index (I need to first load Shannon)
+```{r}
+library(vegan)
+abundance
+shannon<-diversity(abundance, index = "shannon")
+shannon
+```
+The Shannon idex is the same for all 6 samples, which makes sense because each sample has 10 unique tree species. The Shannon index gives us information regarding abundance of each species and species richness. Given that all samples have the same richness and abundance, it makes sense that the Shannon index is the same for all 6 samples. 
+
+The compiled matrix has a master list of all plant species across all six lists. Resolve this master list for proper taxonomy -- each plant species should have an accepted scientific species name. (Using taxize if possible.). 
+I resolved the names using Global Names Resolver because I wasn't sure how to resolve using taxize (I've uploaded the csv to github)
+
+Phylogenize (revisiting skills from Digital Lab 3). Again, it's a good idea to write the tree you create as a file; you then can and should push back to GitHub as you submit your assignment. 
+
+
+```{r}
+install.packages(ape)
+install.packages(devtools)
+devtools::install_github("ropensci/brranching")
+library(ape)
+library(brranching)
+```
+I am creating 6 different phylogenies for each city. 
+
+First, I'll make a vector for each city. 
+```{r}
+toronto_taxa<-c("Pinus nigra", "Ulmus americana", "Fraxinus pennsylvanica", "Acer saccharinum", "Acer platanoides","Fraxinus americana","Picea glauca", "Acer negundo", "Thuja occidentalis", "Magnolia grandiflora")
+
+sanfran_taxa<-c("Pittosporum undulatum", "Magnolia grandiflora", "Lophostemon confertus", "Prunus serrulata", "Arbutus Marina", "Metrosideros excelsa", "Ficus nitida", "Tristaniopsis laurina", "Platanus x hispanica", "Picea glauca")
+
+nyc_taxa<-c("Quercus palustris", "Gleditsia triacanthos", "Pyrus calleryana", "Acer platanoides", "Sophora japonica", "Zelkova serrata", "Tilia cordata", "Platanus × acerifolia", "Prunus avium", "Ginkgo biloba")
+
+chicago_taxa<-c("Ulmus Patriot", "Liquidambar styraciflua", "Platanus x acerifolia", "Zelkova serrata", "Tilia americana", "Sassafras albidum", "Ginkgo biloba", "Quercus imbricaria", "Ostrya virginiana", "Viburnum lentago")
+
+pittsburgh_taxa<- c("Acer platanoides", "Acer rubrum", "Pyrus calleryana", "Platanus x acerifolia", "Tilia cordata", "Liquidambar styraciflua", "Gleditsia triacanthos inermis", "Ginkgo biloba", "Zelkova serrata", "Quercus palustris")
+
+providence_taxa<-c("Acer platanoides", "Pyrus calleryana", "Fraxinus pennsylvanica", "Gleditsia triacanthos", "Platanus × acerifolia", "Acer rubrum", "Prunus serrulata", "Tilia cordata", "Zelkova serrata", "Acer saccharum")
+```
+
+
+I use the function Phylomatic and ask phylomatic to operate on taxa. I have my phylogenies!
+```{r}
+tree_phylomatic_toronto <- phylomatic(taxa = toronto_taxa, get = 'POST')
+plot(tree_phylomatic_toronto, no.margin = TRUE)
+newick_fn2 = "tree_phylomatic_toronto"
+write.tree(tree_phylomatic_toronto, file=newick_fn2)
+
+tree_phylomatic_sanfran <- phylomatic(taxa = sanfran_taxa, get = 'POST')
+plot(tree_phylomatic_sanfran, no.margin = TRUE)
+newick_fn2 = "tree_phylomatic_sanfran"
+write.tree(tree_phylomatic_sanfran, file=newick_fn2)
+
+tree_phylomatic_nyc <- phylomatic(taxa = nyc_taxa, get = 'POST')
+plot(tree_phylomatic_nyc, no.margin = TRUE)
+newick_fn2 = "tree_phylomatic_nyc"
+write.tree(tree_phylomatic_nyc, file=newick_fn2)
+
+tree_phylomatic_chicago <- phylomatic(taxa = chicago_taxa, get = 'POST')
+plot(tree_phylomatic_chicago, no.margin = TRUE)
+newick_fn2 = "tree_phylomatic_chicago"
+write.tree(tree_phylomatic_chicago, file=newick_fn2)
+
+tree_phylomatic_pittsburgh <- phylomatic(taxa = pittsburgh_taxa, get = 'POST')
+plot(tree_phylomatic_pittsburgh, no.margin = TRUE)
+newick_fn2 = "tree_pittsburgh_pittsburgh"
+write.tree(tree_phylomatic_pittsburgh, file=newick_fn2)
+
+tree_phylomatic_providence <- phylomatic(taxa = providence_taxa, get = 'POST')
+plot(tree_phylomatic_providence, no.margin = TRUE)
+newick_fn2 = "tree_providence_providence"
+write.tree(tree_phylomatic_providence, file=newick_fn2)
+
+```
+
+I can also write the trees in a textfile, in newick format. 
+
+```{r}
+newick_toronto = "tree_phylomatic_toronto"
+write.tree(tree_phylomatic_toronto, file=newick_toronto)
+
+newick_sanfran = "tree_phylomatic_sanfran"
+write.tree(tree_phylomatic_sanfran, file=newick_sanfran)
+
+newick_nyc = "tree_phylomatic_nyc"
+write.tree(tree_phylomatic_nyc, file=newick_nyc)
+
+newick_chicago = "tree_phylomatic_chicago"
+write.tree(tree_phylomatic_chicago, file=newick_chicago)
+
+newick_pittsburgh = "tree_phylomatic_pittsburgh"
+write.tree(tree_phylomatic_pittsburgh, file=newick_pittsburgh)
+
+newick_providence = "tree_phylomatic_providence"
+write.tree(tree_phylomatic_providence, file=newick_providence)
+
+```
+
+I'm not sure how to use PD (Phylogenetic Diversity).  
+```{r}
+newick_toronto = "(((((acer_negundo,acer_saccharinum,acer_platanoides)acer,ulmus_americana),(fraxinus_pennsylvanica,fraxinus_americana)fraxinus),magnolia_grandiflora)magnoliales_to_asterales,(thuja_occidentalis,(pinus_nigra,picea_glauca)pinaceae)pinales);"
+tr_torontoFULL = read.tree(text=newick_toronto)
+plot(tr_torontoFULL, type="cladogram", direction=c("upwards"))
+
+par(mfrow = c(2, 2))
+
+for (i in row.names(tt.ab)) {
+plot(tr_torontoFULL, show.tip.label = FALSE, main = i)
+tiplabels(tip = which(tr_torontoFULL$tip.label %in% names(which(abundance [i, ] > 0))), pch=19, cex=1)
+}
+```
+
+
+
+
+
+
+
+
+
+
+
