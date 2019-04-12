@@ -211,17 +211,17 @@ trees
 
 I am creating a character variable for each city which will have the species entries.
 ```{r}
-toronto_trees=c("Pinus nigra", "Ulmus americana", "Fraxinus pennsylvanica", "Acer saccharinum", "Acer platanoides","Fraxinus americana","Picea glauca", "Acer negundo", "Thuja occidentalis", "Magnolia grandiflora")
+toronto_trees=c("Ulmus americana", "Fraxinus pennsylvanica", "Acer saccharinum", "Acer platanoides","Fraxinus americana","Picea glauca", "Acer negundo", "Thuja occidentalis", "Magnolia grandiflora")
 
-sanfran_trees=c("Pittosporum undulatum", "Magnolia grandiflora", "Lophostemon confertus", "Prunus serrulata", "Arbutus Marina", "Metrosideros excelsa", "Ficus nitida", "Tristaniopsis laurina", "Platanus x hispanica", "Picea glauca")
+sanfran_trees=c("Pittosporum undulatum", "Magnolia grandiflora", "Lophostemon confertus", "Prunus serrulata","Metrosideros excelsa","Tristaniopsis laurina","Picea glauca")
 
-nyc_trees=c("Quercus palustris", "Gleditsia triacanthos", "Pyrus calleryana", "Acer platanoides", "Sophora japonica", "Zelkova serrata", "Tilia cordata", "Platanus × acerifolia", "Prunus avium", "Ginkgo biloba")
+nyc_trees=c("Quercus palustris", "Gleditsia triacanthos", "Pyrus calleryana", "Acer platanoides", "Zelkova serrata", "Tilia cordata", "Prunus avium", "Ginkgo biloba")
 
-chicago_trees=c("Ulmus Patriot", "Liquidambar styraciflua", "Platanus x acerifolia", "Zelkova serrata", "Tilia americana", "Sassafras albidum", "Ginkgo biloba", "Quercus imbricaria", "Ostrya virginiana", "Viburnum lentago")
+chicago_trees=c("Liquidambar styraciflua","Zelkova serrata", "Tilia americana", "Sassafras albidum", "Ginkgo biloba", "Ostrya virginiana", "Viburnum lentago")
 
-pittsburgh_trees= c("Acer platanoides", "Acer rubrum", "Pyrus calleryana", "Platanus x acerifolia", "Tilia cordata", "Liquidambar styraciflua", "Gleditsia triacanthos inermis", "Ginkgo biloba", "Zelkova serrata", "Quercus palustris")
+pittsburgh_trees= c("Acer platanoides", "Acer rubrum", "Pyrus calleryana","Tilia cordata", "Liquidambar styraciflua", "Ginkgo biloba", "Zelkova serrata", "Quercus palustris")
 
-providence_trees=c("Acer platanoides", "Pyrus calleryana", "Fraxinus pennsylvanica", "Gleditsia triacanthos", "Platanus × acerifolia", "Acer rubrum", "Prunus serrulata", "Tilia cordata", "Zelkova serrata", "Acer saccharum")
+providence_trees=c("Acer platanoides", "Pyrus calleryana", "Fraxinus pennsylvanica", "Gleditsia triacanthos", "Acer rubrum", "Prunus serrulata", "Tilia cordata", "Zelkova serrata", "Acer saccharum")
 
 toronto_trees 
 sanfran_trees
@@ -379,7 +379,7 @@ shannon
 simpson<-diversity(abundance, index="simpson")
 simpson
 ```
-The Shannon idex is the same for all 6 samples, which makes sense because each sample has 10 unique tree species. The Shannon index gives us information regarding abundance of each species and species richness. Given that all samples have the same richness and abundance, it makes sense that the Shannon index is the same for all 6 samples. The same applies for the Simpson data. 
+CHANGE THIS: The Shannon idex is the same for all 6 samples, which makes sense because each sample has 10 unique tree species. The Shannon index gives us information regarding abundance of each species and species richness. Given that all samples have the same richness and abundance, it makes sense that the Shannon index is the same for all 6 samples. The same applies for the Simpson data. 
 
 The compiled matrix has a master list of all plant species across all six lists. Resolve this master list for proper taxonomy -- each plant species should have an accepted scientific species name. (Using taxize if possible.). 
 I resolved the names using Global Names Resolver because I wasn't sure how to resolve using taxize (I've uploaded the csv to github)
@@ -466,6 +466,16 @@ write.tree(tree_phylomatic_pittsburgh, file=newick_pittsburgh)
 
 newick_providence = "tree_phylomatic_providence"
 write.tree(tree_phylomatic_providence, file=newick_providence)
+
+```
+
+
+```{r}
+spp1<-c("Pinus nigra", "Ulmus americana", "Fraxinus pennsylvanica", "Acer saccharinum", "Acer platanoides","Fraxinus americana","Picea glauca", "Acer negundo", "Thuja occidentalis", "Magnolia grandiflora", "Pittosporum undulatum", "Magnolia grandiflora", "Lophostemon confertus", "Prunus serrulata", "Arbutus Marina", "Metrosideros excelsa", "Ficus nitida", "Tristaniopsis laurina", "Platanus x hispanica", "Picea glauca", "Quercus palustris", "Gleditsia triacanthos", "Pyrus calleryana", "Acer platanoides", "Sophora japonica", "Zelkova serrata", "Tilia cordata", "Platanus × acerifolia", "Prunus avium", "Ginkgo biloba", "Ulmus Patriot", "Liquidambar styraciflua", "Platanus x acerifolia", "Zelkova serrata", "Tilia americana", "Sassafras albidum", "Ginkgo biloba", "Quercus imbricaria", "Ostrya virginiana", "Viburnum lentago", "Acer platanoides", "Acer rubrum", "Pyrus calleryana", "Platanus x acerifolia", "Tilia cordata", "Liquidambar styraciflua", "Gleditsia triacanthos inermis", "Ginkgo biloba", "Zelkova serrata", "Quercus palustris", "Acer platanoides", "Pyrus calleryana", "Fraxinus pennsylvanica", "Gleditsia triacanthos", "Platanus × acerifolia", "Acer rubrum", "Prunus serrulata", "Tilia cordata", "Zelkova serrata", "Acer saccharum")
+urlA<-"http://datadryad.org/bitstream/handle/10255/dryad.8791/final_tree.tre?sequence=1"
+#plotting 
+alltrees<-phylomatic(taxa=spp1, treeuri=urlA)
+plot(alltrees)
 
 ```
 
