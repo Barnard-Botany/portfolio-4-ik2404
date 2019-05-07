@@ -1,0 +1,183 @@
+---
+title: "Mastery Assignment: Collecting Information on Pentas lanceolata, Crassula ovata, Plectranthus scutellarioides, Ocimum basilicum
+
+Goal of this assignment was to collect information on the 4 plant species that will be the "stars" of our interactive film. I collected occurrence data, range data, mapped occurrence data on climate map, phylogenized the 4 species, checked to see if I am using the correct species names,etc. I used packages from multiple portfolios. 
+
+output: html_notebook
+---
+First, I will focus on getting occurrence data for the 4 plant species: 
+```{r}
+library(BIEN)
+library(ape) # Package for working with phylogenies in R
+library(maps) # Useful for making quick maps of occurrences
+library(sp) # A package for spatial data
+library(raster)# Another package for spatial data 
+library(DBI)
+library (RPostgreSQL)
+vignette("BIEN")
+devtools::install_github("ropensci/rgbif")
+library(rgbif)
+devtools::install_github("ropensci/spocc")
+library(spocc)
+library("rgbif")
+library("spocc")
+library("taxize")
+```
+
+I want to make sure I am using the correct species name.
+```{r}
+results=gnr_resolve(names="Pentas lanceolata")
+head(results$matched_name)
+results=gnr_resolve(names="Crassula ovata")
+head(results$matched_name)
+results=gnr_resolve(names="Plectranthus scutellarioides")
+head(results$matched_name)
+results=gnr_resolve(names="Ocimum basilicum")
+head(results$matched_name)
+```
+I am using the correct names! Let's check to see if we are using the accepted name or a synonym. I will also be able to obtain the taxanomical serial number for each plant.
+
+```{r}
+name="Pentas lanceolata"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn
+lapply(tsn, itis_acceptname)
+
+name="Crassula ovata"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn
+lapply(tsn, itis_acceptname)
+
+name="Plectranthus scutellarioides"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn
+lapply(tsn, itis_acceptname)
+
+name="Ocimum basilicum"  
+tsn=get_tsn(name, accepted=FALSE)
+tsn
+lapply(tsn, itis_acceptname)
+
+
+```
+Though the above code has run properly, I am not getting any information on the accepted name. 
+
+
+My next goal is to map occurrence and range data for my 4 species using data from BIEN. 
+
+The issue with BIEN is that it primarily collects range and occurrence data from North and South America. As a result, I didn't get a for P. lanceolata,even though I used the same code to get a map for the other 3 plants (see code below). I kept getting an error. This led me to conclude that BIEN doesn't have occurrence data for P. lanceolata. The maps for C. ovata, O.basilicum, and P. scutellarioides had limited occurrence data. BIEN may not be the best resource to use to get occurrence data for these 4 plants (which is why I use GBIF to map my other maps). 
+
+
+```{r}
+C_ovata <- BIEN_occurrence_species(species = "Crassula ovata")
+C_ovata_rangemap <- BIEN_ranges_load_species("Crassula ovata")
+map('world', fill=T, col="grey", bg="light blue", xlim=c(-150,150), ylim=c(-60,100))
+plot(C_ovata_rangemap, col="green", add=T)
+points(cbind(C_ovata$longitude, C_ovata$latitude), col="blue", pch=20, cex=1)
+```
+
+```{r}
+O_basilicum<-BIEN_occurrence_species(species="Ocimum basilicum")
+O_basilicum_rangemap <- BIEN_ranges_load_species("Ocimum basilicum")
+map('world', fill=T, col="grey", bg="light blue", xlim=c(-150,150), ylim=c(-60,100))
+plot(O_basilicum_rangemap, col="green", add=T)
+points(cbind(O_basilicum$longitude, O_basilicum$latitude), col="blue", pch=20, cex=1)
+```
+
+```{r}
+P_scutellarioides <- BIEN_occurrence_species(species = "Plectranthus scutellarioides")
+P_scutellarioides_rangemap <- BIEN_ranges_load_species("Plectranthus scutellarioides")
+map('world', fill=T, col="grey", bg="light blue", xlim=c(-150,150), ylim=c(-60,100))
+plot(P_scutellarioides_rangemap, col="green", add=T)
+points(cbind(P_scutellarioides$longitude, P_scutellarioides$latitude), col="blue", pch=20, cex=1)
+```
+
+
+Now, I want to retrieve taxonomical information about my 4 species. P. scutellarioides and O. basilicum are in the same family (Lamiaceae). 
+```{r}
+classification(c("Pentas lanceolata", "Crassula ovata", "Ocimum basilicum","Plectranthus scutellarioides"), db="itis")
+```
+
+In order to map out the occurrence data from GBIF on a worldclimate map, I will first need to get occurrence data for each species, convert the data into a dataframe and then clean the dataframe. 
+```{r}
+P_lanceolata <- occ(q="Pentas lanceolata", from="gbif", limit=500)   #With this line of code, I am getting occurrence data
+P_lanceolata_data <- (P_lanceolata$gbif$data)
+P_lanceolata_df <- occ2df(P_lanceolata)                  #With this line of code, I am converting into dataframe
+P_lanceolata_df <- P_lanceolata_df[complete.cases(P_lanceolata_df),]     #With this line of code, I am cleaning the dataframe
+P_lanceolata_df
+
+C_ovata <- occ(q="Crassula ovata", from="gbif", limit=500)   #With this line of code, I am getting occurrence data
+C_ovata_data <- (C_ovata$gbif$data)
+C_ovata_df <- occ2df(C_ovata)                  #With this line of code, I am converting into dataframe
+C_ovata_df <- C_ovata_df[complete.cases(C_ovata_df),]     #With this line of code, I am cleaning the dataframe
+C_ovata_df
+
+O_basilicum <- occ(q="Ocimum basilicum", from="gbif", limit=500)   #With this line of code, I am getting occurrence data
+O_basilicum_data <- (O_basilicum$gbif$data)
+O_basilicum_df <- occ2df(O_basilicum)                  #With this line of code, I am converting into dataframe
+O_basilicum_df <- O_basilicum_df[complete.cases(O_basilicum_df),]     #With this line of code, I am cleaning the dataframe
+O_basilicum_df
+
+P_scutellarioides <- occ(q="Plectranthus scutellarioides", from="gbif", limit=500)   #With this line of code, I am getting occurrence data
+P_scutellarioides_data <- (P_scutellarioides$gbif$data)
+P_scutellarioides_df <- occ2df(P_scutellarioides)                  #With this line of code, I am converting into dataframe
+P_scutellarioides_df <- P_scutellarioides_df[complete.cases(P_scutellarioides_df),]     #With this line of code, I am cleaning the dataframe
+P_scutellarioides_df
+
+```
+
+
+Once I have all my dataframes, I can then plot occurrence for each species on a map for temperature. 
+
+P.lanceolata
+```{r}
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+plot(all.worldclim[["bio1"]])
+points(cbind(P_lanceolata_df$longitude,P_lanceolata_df$latitude), col="red", pch=20, cex=.8)
+```
+C. ovata
+```{r}
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+plot(all.worldclim[["bio1"]])
+points(cbind(C_ovata_df$longitude,C_ovata_df$latitude), col="red", pch=20, cex=.8)
+```
+
+O.basilicum
+```{r}
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+plot(all.worldclim[["bio1"]])
+points(cbind(O_basilicum_df$longitude,O_basilicum_df$latitude), col="red", pch=20, cex=.8)
+```
+
+P.scutellariodes
+```{r}
+all.worldclim <- raster::getData("worldclim", res = 10, var = "bio")
+plot(all.worldclim[["bio1"]])
+points(cbind(P_scutellarioides_df$longitude,P_scutellarioides_df$latitude), col="red", pch=20, cex=.8)
+```
+
+In comparision to the occurrence data mapped from BIEN, occurrence data mapped from GBIF has a lot more occurrence data for each plant species.
+
+I will now create a phylogeny for the 4 plant species. 
+```{r}
+taxa<-c("Pentas lanceolata", "Crassula ovata", "Plectranthus scutellarioides", "Ocimum basilicum")
+taxa
+```
+```{r}
+tree_phylomatic <- phylomatic(taxa = taxa, storedtree ="R20120829", get = 'POST')
+plot(tree_phylomatic, no.margin = TRUE)
+```
+
+The above phylogeny makes sense because O . basilicum and P. scutellariodies are from the same family, which means they share a recent common ancestor. C. ovata is the outgroup. 
+
+Writing the above tree in newick format 
+```{r}
+newick_fn = "tree_phylomatic"
+write.tree(tree_phylomatic, file=newick_fn)
+```
+
+R has been valuable in terms of gathering data for the 4 plant species used in our interactive film. Using R not only confirmed the data we collected from our sources was accurate, but it also gave me the ability to create a phylogeny of the 4 plants (and therefore understand how the 4 plants are related), create an temperature map with occurrence data, and find key taxonomical information to help explain the phylogeny tree. 
+
+
+
+
